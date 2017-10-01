@@ -6,14 +6,17 @@ CONFIG += c++11
 TARGET = DictionaryToDB
 CONFIG += console
 CONFIG -= app_bundle
+CONFIG +=c++14
 
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    CDict.cpp
+    CDict.cpp \
+    CWord.cpp
 
 HEADERS += \
-    CDict.h
+    CDict.h \
+    CWord.h
 
 RESOURCES += \
     creationsql.qrc
