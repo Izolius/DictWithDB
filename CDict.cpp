@@ -144,12 +144,16 @@ bool CDict::AddWordtoVectorTable(CDict::EDictTable table,uint minindex, uint max
         strQuery=strQuery.arg(getTable(table));
         for (uint index=minindex;index<maxindex;index++){
             for (uint i=0;i<Values[index-minindex].size();i++){
-                strQuery.append(QString("(:Word_id_%1,").arg(index));
+                //strQuery.append('(');
+                strQuery.append(QString("( :Wordid_%1_%2 ,").arg(index).arg(i));
+                //strQuery.append(QString::number(index)+", ");
                 if (bNeedSenseNum){
-                    strQuery.append(QString(":SenseNum_%3_%4, ").arg(index).arg(i));
+                    strQuery.append(QString(":SenseNum_%1_%2, ").arg(index).arg(i));
+                    //strQuery.append(QString::number(i)+", ");
                 }
                 for (uint column=0;column<getDictParams().m_dim;column++){
-                    strQuery.append(QString(":column_%5_%6").arg(index).arg(column));
+                    strQuery.append(QString(":column_%1_%2_%3").arg(index).arg(i).arg(column));
+                    //strQuery.append(QString::number(Values[index-minindex][i][column]));
                     if (column!=getDictParams().m_dim-1)
                         strQuery.append(',');
                 }
@@ -164,11 +168,12 @@ bool CDict::AddWordtoVectorTable(CDict::EDictTable table,uint minindex, uint max
         query.prepare(strQuery);
         for (uint index=minindex;index<maxindex;index++){
             for (uint i=0;i<Values[index-minindex].size();i++){
-                query.bindValue(QString("(:Word_id_%1").arg(index),index);
+                query.bindValue(QString(":Wordid_%1_%2").arg(index).arg(i),index);
+                //qDebug()<<query.boundValue(QString(":Wordid%1%2").arg(index).arg(i));
                 if (bNeedSenseNum)
-                    query.bindValue(QString(":SenseNum_%3_%4").arg(index).arg(i),i);
+                    query.bindValue(QString(":SenseNum_%1_%2").arg(index).arg(i),i);
                 for (uint column=0;column<getDictParams().m_dim;column++){
-                    query.bindValue(QString(":column_%5_%6").arg(index).arg(column),Values[index-minindex][i][column]);
+                    query.bindValue(QString(":column_%1_%2_%3").arg(index).arg(i).arg(column),Values[index-minindex][i][column]);
                 }
             }
         }
@@ -180,11 +185,12 @@ bool CDict::AddWordtoVectorTable(CDict::EDictTable table,uint minindex, uint max
             qDebug()<<query.lastError();
             bResult&=false;
         }
+        //qDebug()<<query.executedQuery();
     }
     return bResult;
 }
 
-QString CDict::getTable(CDict::EDictTable table, bool withDbName)
+QString CDict::getTable(CDict::EDictTable table, bool withDbName) const
 {
     QString Result;
     switch(table){
@@ -238,6 +244,43 @@ bool CDict::AddWordstoDB(uint minindex, uint maxindex, const vector<QString> &st
         bResult&=AddWordtoVectorTable(dtCentre,minindex,maxindex,centres);
     }
     return bResult;
+}
+
+const CWord &CDict::getWordfromDB(const QString &strWord, bool bUpdateCache/*=true*/) const
+{
+    uint index=-1, scount;
+    vector<ereal> global(getDictParams().m_dim);
+    vector<valarray<ereal>> senses;
+    vector<valarray<ereal>> centres;
+
+    {
+        QSqlQuery query(getDB());
+        QString strQuery("select * from %1 where %2=:Word");
+        strQuery=strQuery.arg(getTable(dtWords)).arg(dtWordsFields.strWord);
+        query.prepare(strQuery);
+        query.bindValue(":Word",strWord);
+        if (query.exec()){
+            query.next();
+            index=query.value(0).toInt();
+            scount=query.value(2).toInt();
+        }else{
+
+        }
+        query.finish();
+    }
+    if (index!=-1){
+        {
+            QSqlQuery query(getDB());
+            QString strQuery("select * from %1 where %2=:Word_id");
+            strQuery=strQuery.arg(getTable(dtGlobal)).arg(dtWordsFields.strWord);
+            query.prepare(strQuery);
+            query.bindValue(":Word_id",index);
+            if (query.exec()){
+                query.next();
+
+            }
+        }
+    }
 }
 
 CDictParams CDict::getDictParams(bool fromDb/*=false*/) const
@@ -390,8 +433,17 @@ bool CDict::FillDb(const QString &strFileName, bool bFromBinary/*=false*/)
             }
             bResult&=AddWordstoDB(i,i+getBlockLenght(),words,globals,senses,centres);
             i+=BlockLenght;
-            QTextStream(stdout)<<i*1.0/m_size<<"  of words inserted\r";
+            QTextStream(stdout)<<i*1.0/m_size<<"  of words inserted";
+            if (i!=m_size-1)
+                QTextStream(stdout)<<"\r";
+            else
+                QTextStream(stdout)<<"\n";
         }
         return bResult;
     }
+}
+
+CRefWord CDict::getWord() const
+{
+
 }

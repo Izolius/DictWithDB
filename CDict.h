@@ -6,6 +6,8 @@
 #include <functional>
 #include <vector>
 #include <QSqlDatabase>
+#include <list>
+#include "CWord.h"
 using namespace std;
 
 struct CDictParams{
@@ -13,8 +15,6 @@ struct CDictParams{
     CDictParams(uint dim):m_dim(dim){}
     CDictParams():CDictParams(-1){}
 };
-
-typedef float ereal;
 
 class CDict
 {
@@ -26,10 +26,26 @@ class CDict
         dtCentre=0x10,
         dtAll=dtParams|dtWords|dtGlobal|dtSense|dtCentre
     };
+
+    static struct SdtWordsFields{
+        const QString id="id";
+        const QString strWord="Word";
+        const QString sensesCount="SensesCount";
+    } dtWordsFields;
+    static struct StdGlobalFields{
+        const QString word_id="Word_id";
+        const QString column="Column_%1";
+    } dtGlobalFields;
+    static struct StdSenseFileds{
+        const StdGlobalFields GlobalFields;
+        const QString senseNum="SenseNum";
+    } dtSenseFields;
+
     QString m_strDbName;
     uint m_dim, m_size;
     uint m_BlockLenght;
     QSqlDatabase m_DB;
+    mutable list<CWord> m_CachedWords;
     bool DropTables(EDictTable tables);
 
     bool CreateTables(EDictTable tables);
@@ -40,7 +56,9 @@ class CDict
     bool AddWordstoDB(uint minindex, uint index, const vector<QString> &strWords, const vector<vector<valarray<ereal> > > &globals,
                      const vector<vector<valarray<ereal> > > &senses, const vector<vector<valarray<ereal>> > &centres);
 
-    QString getTable(EDictTable table, bool withDbName=false);
+    const CWord &getWordfromDB(const QString &strWord, bool bUpdateCache=true) const;
+
+    QString getTable(EDictTable table, bool withDbName=false) const;
     QString getTable(const QString &strTableName) const;
     static QStringList getTables(EDictTable tables);
 public:
@@ -56,6 +74,8 @@ public:
     bool CloseDB();
     bool ClearDb();
     bool FillDb(const QString &strFileName, bool bFromBinary=false);
+
+    CRefWord getWord() const;
 };
 
 #endif // CDICT_H
