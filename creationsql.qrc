@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/sql">
+        <file>Rsc/Params.sql</file>
+        <file>Rsc/Words.sql</file>
+    </qresource>
+</RCC>
