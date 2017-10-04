@@ -34,7 +34,8 @@ class CDict
         dtfWords_SensesCount,
         dtfVector_Word_id,
         dtfVector_SenseNum,
-        dtfVector_column
+        dtfVector_column,
+        dtfParams_dim
     };
 
     QString m_strDbName;
@@ -48,13 +49,13 @@ class CDict
     bool CreateTables(EDictTable tables);
     bool CreateTableFromRsc(const QString &strTableName);
     bool CreateVectorTable(const QString &strTableName, bool bNeedSensesCount);
-    bool AddWordtoVectorTable(EDictTable table, uint minindex, uint maxindex, const vector<vector<valarray<ereal> > > &Values);
 
+    bool AddWordtoVectorTable(EDictTable table, uint minindex, uint maxindex, const vector<vector<valarray<ereal> > > &Values);
     bool AddWordstoDB(uint minindex, uint index, const vector<QString> &strWords, const vector<vector<valarray<ereal> > > &globals,
                      const vector<vector<valarray<ereal> > > &senses, const vector<vector<valarray<ereal>> > &centres);
+    bool AddDictParamstoDB(const CDictParams &obj);
 
     CWord &getNewWordObj(uint index) const;
-
 
     const CWord &getWordfromDB(const QString &strWord, bool bUpdateCache=true) const;
     void getWordVectorfromDB(CWord &obj, EDictTable table) const;
@@ -63,6 +64,8 @@ class CDict
     QString getField(EDictTablesField field,EDictTable table=dtWords, bool bwithTable=false) const;
     //QString getTable(const QString &strTableName) const;
     static QStringList getTables(EDictTable tables);
+
+    void setDictParams(const CDictParams &obj);
 public:
     CDict(QString strDbName);
     CDict();
@@ -76,9 +79,10 @@ public:
     bool CloseDB();
     bool ClearDb();
     bool FillDb(const QString &strFileName, bool bFromBinary=false);
+    bool LoadCache();
 
     CRefWord getWord(uint index, bool *ok=nullptr) const;
-    CRefWord getWord(const QString &Word, bool *ok) const;
+    CRefWord getWord(const QString &Word, bool *ok=nullptr) const;
 };
 
 #endif // CDICT_H

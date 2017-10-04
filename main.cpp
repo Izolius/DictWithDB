@@ -11,6 +11,8 @@ int main(int argc, char *argv[])
     CDict dict(vecs);
     dict.setBlockLenght(10);
     dict.OpenDB();
-    dict.FillDb(QString("..//%1.txt").arg(vecs));
+    //dict.FillDb(QString("..//%1.txt").arg(vecs));
+    dict.LoadCache();
+    auto w=dict.getWord("A");
     dict.CloseDB();
 }

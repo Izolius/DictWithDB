@@ -219,6 +219,7 @@ QString CDict::getField(CDict::EDictTablesField field,EDictTable table/*=dtWords
         case dtfVector_Word_id:res="Word_id"; break;
         case dtfVector_SenseNum:res="SenseNum";break;
         case dtfVector_column:res="Column_%1"; break;
+        case dtfParams_dim: res="dim";break;
     }
     if (bwithTable){
         res=getTable(table)+'.'+res;
@@ -251,6 +252,9 @@ bool CDict::AddWordstoDB(uint minindex, uint maxindex, const vector<QString> &st
 
         if (query.exec()){
             //qDebug()<<strWord+" was inserted in "+getTable(curTable);
+            for (uint i=minindex;i<maxindex;i++){
+                m_CachedWords[i]=strWords[i-minindex];
+            }
         }else{
             qDebug()<<QString("Words from %1 to %2 wasn't' inserted in ").arg(strWords[0]).arg(strWords[maxindex-1-minindex])+curTable;
             qDebug()<<query.lastError();
@@ -263,6 +267,18 @@ bool CDict::AddWordstoDB(uint minindex, uint maxindex, const vector<QString> &st
         bResult&=AddWordtoVectorTable(dtCentre,minindex,maxindex,centres);
     }
     return bResult;
+}
+
+bool CDict::AddDictParamstoDB(const CDictParams &obj)
+{
+    QSqlQuery query(getDB());
+    QString strQuery("insert into %1 values(:dim)");
+    strQuery=strQuery.arg(getTable(dtParams));
+    query.prepare(strQuery);
+    query.bindValue(":dim",obj.m_dim);
+    if(query.exec()){
+
+    }
 }
 
 CDictParams CDict::getDictParams(bool fromDb/*=false*/) const
@@ -321,6 +337,11 @@ QStringList CDict::getTables(CDict::EDictTable tables)
     if ((tables & EDictTable::dtCentre)!=0)
         Result.append("Centre");
     return Result;
+}
+
+void CDict::setDictParams(const CDictParams &obj)
+{
+    m_dim=obj.m_dim;
 }
 
 CDict::CDict(QString strDbName):m_strDbName(strDbName),m_dim(0),m_size(0),m_BlockLenght(10000)
@@ -420,6 +441,31 @@ bool CDict::FillDb(const QString &strFileName, bool bFromBinary/*=false*/)
     }
 }
 
+bool CDict::LoadCache()
+{
+    {
+        QSqlQuery query(getDB());
+        QString strQuery("select * from %1");
+        int index;
+        QString word;
+        strQuery=strQuery.arg(getTable(dtWords));
+        query.prepare(strQuery);
+        if (query.exec()){
+            QSqlRecord rec=query.record();
+            while (query.next()){
+                index=query.value(rec.indexOf(getField(dtfWords_id))).toInt();
+                word=query.value(rec.indexOf(getField(dtfWords_Word))).toString();
+                m_CachedWords[index]=word;
+            }
+        }else{
+            qDebug()<<"Cache wasn't loaded";
+        }
+    }
+    {
+        setDictParams(getDictParams(true));
+    }
+}
+
 
 CWord &CDict::getNewWordObj(uint index) const
 {
@@ -459,7 +505,7 @@ void CDict::getWordVectorfromDB(CWord &obj, CDict::EDictTable table) const
     Q_ASSERT(table == dtGlobal || table == dtCentre || table == dtSense);
     QSqlQuery query(getDB());
     QString strQuery("select * from %1 where %2=:Word_id");
-    strQuery=strQuery.arg(getTable(dtGlobal)).arg(getField(dtfWords_Word));
+    strQuery=strQuery.arg(getTable(dtGlobal)).arg(getField(dtfVector_Word_id));
     query.prepare(strQuery);
     query.bindValue(":Word_id",obj.m_index);
     if (query.exec()){
