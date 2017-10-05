@@ -2,6 +2,8 @@
 #define CDICT_H
 
 #include <QString>
+#include <QMap>
+#include <QSqlTableModel>
 #include <valarray>
 #include <functional>
 #include <vector>
@@ -17,8 +19,18 @@ struct CDictParams{
     CDictParams():CDictParams(-1){}
 };
 
+struct CSimpleWord
+{
+    uint m_id;
+    QString m_str;
+    uint m_scount;
+    CSimpleWord(uint id, QString str, uint scount):m_id(id),m_str(str),m_scount(scount){}
+    CSimpleWord():CSimpleWord(-1,"",0){}
+};
+
 class CDict
 {
+public:
     enum EDictTable{
         dtParams=0x1,
         dtWords=0x2,
@@ -38,11 +50,13 @@ class CDict
         dtfParams_dim
     };
 
+private:
+
     QString m_strDbName;
     uint m_dim, m_size;
     uint m_BlockLenght;
     QSqlDatabase m_DB;
-    mutable map<uint, QString> m_CachedWords;
+    mutable map<uint,CSimpleWord>  m_CachedWords;
     mutable map<uint, CWord> m_CachedWordObjs;
     bool DropTables(EDictTable tables);
 
@@ -60,8 +74,6 @@ class CDict
     const CWord &getWordfromDB(const QString &strWord, bool bUpdateCache=true) const;
     void getWordVectorfromDB(CWord &obj, EDictTable table) const;
 
-    QString getTable(EDictTable table, bool withDbName=false) const;
-    QString getField(EDictTablesField field,EDictTable table=dtWords, bool bwithTable=false) const;
     //QString getTable(const QString &strTableName) const;
     static QStringList getTables(EDictTable tables);
 
@@ -83,6 +95,9 @@ public:
 
     CRefWord getWord(uint index, bool *ok=nullptr) const;
     CRefWord getWord(const QString &Word, bool *ok=nullptr) const;
+
+    QString getTable(EDictTable table, bool withDbName=false) const;
+    QString getField(EDictTablesField field,EDictTable table=dtWords, bool bwithTable=false) const;
 };
 
 #endif // CDICT_H

@@ -3,7 +3,7 @@ QT -= gui
 
 CONFIG += c++11
 
-TARGET = DictionaryToDB
+TARGET = DictWithDB
 CONFIG += console
 CONFIG -= app_bundle
 CONFIG +=c++14

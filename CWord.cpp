@@ -57,19 +57,33 @@ CRefWord::CRefWord(const CWord *obj):
 
 }
 
+CRefWord::CRefWord():CRefWord(new CWord())
+{
+    m_bSelfCreatedRealObj=true;
+}
+
 CRefWord::~CRefWord()
 {
+    if (m_bSelfCreatedRealObj){
+        delete m_RealObj;
+        return;
+    }
     if (m_RealObj)
         m_RealObj->m_refs--;
 }
 
 CRefWord::CRefWord(const QStringRef &str,uint index, const valarray<ereal> &global,const vector<valarray<ereal>> &senses,const vector<valarray<ereal>> &centres):
-    m_str(str),m_global(global), m_senses(senses), m_centres(centres),m_RealObj(nullptr), m_index(index)
+    m_str(str),m_global(global), m_senses(senses), m_centres(centres),m_RealObj(nullptr), m_index(index), m_bSelfCreatedRealObj(false)
 {
     Q_ASSERT(senses.size()==centres.size());
-    Q_ASSERT(senses.size()>0);
-    Q_ASSERT(senses[0].size()==global.size());
-    Q_ASSERT(senses[0].size()==centres[0].size());
+    //Q_ASSERT(senses.size()>0);
+    //Q_ASSERT(senses[0].size()==global.size());
+    //Q_ASSERT(senses[0].size()==centres[0].size());
+}
+
+const QStringRef &CRefWord::getStr() const
+{
+    return m_str;
 }
 
 const valarray<ereal> &CRefWord::Global() const

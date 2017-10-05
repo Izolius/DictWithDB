@@ -51,6 +51,7 @@ class CRefWord :IWord
     const CWord *m_RealObj;
     QStringRef m_str;
     uint m_scount, m_index;
+    bool m_bSelfCreatedRealObj;
     const valarray<ereal> &m_global;
     const vector<valarray<ereal>> &m_senses;
     const vector<valarray<ereal>> &m_centres;
@@ -58,11 +59,13 @@ public:
     //CRefWord() = delete;
     CRefWord(const CWord &obj);
     CRefWord(const CWord *obj);
+    CRefWord();
     ~CRefWord();
     CRefWord(const QStringRef &str, uint index, const valarray<ereal> &global,const vector<valarray<ereal>> &senses,const vector<valarray<ereal>> &centres);
     OVERRIDE(const valarray<ereal> &Global() const );
     OVERRIDE(const vector<valarray<ereal> > &Senses() const );
     OVERRIDE(const vector<valarray<ereal> > &Centres() const );
+    OVERRIDE(const QStringRef &getStr() const);
 };
 
 #endif // CWORD_H
